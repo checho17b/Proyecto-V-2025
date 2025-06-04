@@ -1,44 +1,32 @@
-from logger import Logger
-from collector import Collector
-import pandas as pd
 import os
-import sqlite3
+import pandas as pd
+from modeller import Modeler
+from collector import Collector
+from logger import Logger
 
 def main():
     logger = Logger()
-    logger.info('Main', 'main', 'Inicializar clase Logger')
-
-    collector = Collector(logger=logger)
-    logger.info('Main', 'main', 'Inicializar clase Collector')
+    collector = Collector(logger)
+    modeler = Modeler(logger)
 
     df = collector.collector_data()
+    
+    modeler.entrenar(df)
+    
+    preds = modeler.predecir(df)
+    
+    df['prediccion'] = preds
 
-    if df.empty:
-        logger.warning('Main', 'main', 'No se extrajeron datos, DataFrame vacío')
-    else:
-        # Ruta base
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        output_dir = os.path.join(base_path, 'static', 'data')
-        os.makedirs(output_dir, exist_ok=True)
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(base_path, 'static', 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    csv_path = os.path.join(data_dir, 'Apple_data.csv')
+    df.to_csv(csv_path, index=False)
+    
+    logger.info('main', 'main', f'DataFrame con predicciones guardado en {csv_path}')
+    print(f'DataFrame guardado en {csv_path}')
 
-        # Guardar CSV
-        csv_path = os.path.join(output_dir, 'Apple_data.csv')
-        df.to_csv(csv_path, index=False)
-        logger.info('Main', 'main', f'Datos guardados en {csv_path}')
+    print(df.head(20))
 
-        # Guardar SQLite
-        db_path = os.path.join(output_dir, 'Apple_data.db')
-        table_name = 'Apple_history_Data'
-
-        try:
-            conn = sqlite3.connect(db_path)
-            df.to_sql(table_name, conn, if_exists='replace', index=False)
-            conn.close()
-            logger.info('Main', 'main', f'Datos guardados en base de datos SQLite: {db_path} (tabla: {table_name})')
-        except Exception as e:
-            logger.error('Main', 'main', f'Error al guardar en SQLite: {e}')
-
-        print(df.head())
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
