@@ -59,7 +59,7 @@ class Collector:
             df['fecha'] = pd.to_datetime(df['fecha'], dayfirst=True, errors='coerce')
 
             # Ordenar por fecha ascendente
-            df = df.sort_values('fecha', ascending=True).reset_index(drop=True)
+            df = df.sort_values('fecha').reset_index(drop=True)
 
             # Calcular retornos log diarios
             df['retorno_log_diario'] = np.log(df['cierre_ajustado'] / df['cierre_ajustado'].shift(1))
